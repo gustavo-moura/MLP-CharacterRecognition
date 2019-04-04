@@ -3,6 +3,8 @@ import re
 from itertools import islice
 import pandas as pd 
 
+
+# Função utilizada para abrir um aquivo, ler e retornar as informações de digits e labels
 def read_data(digits, labels, filename='digits.data'):
 
     with open('digits.data', 'r') as file_opened:
@@ -11,7 +13,6 @@ def read_data(digits, labels, filename='digits.data'):
     # digits = []
     # labels = []
 
-    digit = []
 
     pixels = []
     pixel = ''
@@ -34,7 +35,7 @@ def read_data(digits, labels, filename='digits.data'):
 
 
             if count == 256:
-                digit.append(pixels)
+                digit = pixels
                 pixels = []
                 count = 0
                 is_digit = False    
@@ -56,6 +57,7 @@ def read_data(digits, labels, filename='digits.data'):
             label = ''
     
 
+# Interpreta e exibe no terminal os dígitos
 def show_digit(data, height=16, width=16):
     i = 0
     for h in range(height):
@@ -68,6 +70,7 @@ def show_digit(data, height=16, width=16):
         print()
 
 
+# Interpreta o valor de label
 def show_label(label):
     i = label.index('1')
     print('label: ', i)
@@ -75,9 +78,11 @@ def show_label(label):
 
 
 
+# MAIN
+
 digits, labels = [],[]
 read_data(digits, labels)
 
-for i in range(len(digits)):
-    show_digit(digits[i][0])
-    show_label(labels[i])
+i = 0
+show_digit(digits[i])
+show_label(labels[i])
