@@ -1,97 +1,34 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import re
-import pandas as pd 
-from itertools import islice
-
 from RedesNeurais import MultiLayerPerceptron
+from handler import read_data, show_digit, show_label, train_test_split
 
 
-# Função utilizada para abrir um aquivo, ler e retornar as informações de digits e labels
-def read_data(digits, labels, filename='digits.data'):
-
-    with open('digits.data', 'r') as file_opened:
-        file = file_opened.read()
-
-    # digits = []
-    # labels = []
-
-
-    pixels = []
-    pixel = ''
-    count = 0
-
-    is_digit = True
-    label = ''
-
-    file = iter(file)
-    for n in file:
-
-        if is_digit:
-            if n==' ' or n=='\n':
-                pixels.append(pixel)
-                pixel=''
-                count += 1
-            else:
-                pixel += n
-                next(islice(file, 4, 5), '')
-
-
-            if count == 256:
-                digit = pixels
-                pixels = []
-                count = 0
-                is_digit = False    
-
-        else:        
-            if count == 20:
-                label = re.sub(' ', '', label)
-                count = 0
-                is_digit = True
-            else:     
-                label += n
-                count += 1
-
-        if n == '\n':
-            digits.append(digit)
-            digit = []
-
-            labels.append(label)
-            label = ''
-    
-
-# Interpreta e exibe no terminal os dígitos, somente para facilitar a visualização
-def show_digit(data, height=16, width=16):
-    i = 0
-    for h in range(height):
-        for w in range(width):
-            if data[i]=='1' or data[i]==1:
-                print('#', end='')
-            else:
-                print('.', end='')
-            i+=1
-        print()
-
-
-# Interpreta o valor de label
-def show_label(label):
-    i = label.index('1')
-    print('label: ', i)
-    return i
-
-
-
-# MAIN
-
+# Leitura do arquivo
 digits, labels = [], []
-read_data(digits, labels)
+read_data(digits, labels, filename="digits.data")
 
+
+# Exibir alguns itens para conferência
+# 	TODO: comentar esse trecho
 i = 0
 show_digit(digits[i])
 show_label(labels[i])
 
-mlp = MultiLayerPerceptron()
+
+# TODO: fazer for pra k-fold cross validation
+
+# Separar conjunto de treinamento e teste
+x_train, x_test, y_train, y_real = train_test_split(digits, labels, test_size=0.2, shuffle=True) #, stratify=y)
+
+
+# Criar rede neural
+mlp = MultiLayerPerceptron().fit(x_train, y_train)
+
+y_pred = mlp.predict(x_test)
+
+accuracy(y_real, y_pred)
 
 
 
