@@ -17,7 +17,6 @@ https://www.google.com/search?q=fun%C3%A7%C3%A3o+de+ativa%C3%A7%C3%A3o&source=ln
 
 class BaseMLP:
 
-    @abstractmethod
     def __init__(self, n_input_knots, n_hidden_layers, n_hidden_neurons, n_output_neurons, coefs_hidden, coefs_output, bias):
 
         self.n_input_knots = n_input_knots
@@ -30,7 +29,7 @@ class BaseMLP:
 
 
     # Inicia a matriz de coeficientes
-    def start_matrix():
+    def start_matrix(self):
 
         # Hidden Layers
         for i in range(self.n_hidden_layers):
@@ -40,21 +39,26 @@ class BaseMLP:
                 weights = []
 
                 for j in range(self.n_input_knots):
-                    weight.append(random())
+                    weights.append(random.random())
 
                 weight_matrix.append(weights)
 
-        self.coefs_hidden.append(weight_matrix)
+            self.coefs_hidden.append(weight_matrix)
 
         # Output Layer
-        for k in range(self.n_output_neurons)
+        for k in range(self.n_output_neurons):
             weights = []
 
-            for j in range(self.n_out)
+            for j in range(self.n_output_neurons):
+                weights.append(random.random())
+
+            self.coefs_output.append(weights)
 
 
 
-    def neuron(X, W):
+
+
+    def neuron(self, X, W):
 
         v = self.linear_combiner(X, W)
 
@@ -66,7 +70,7 @@ class BaseMLP:
 
 
     # cap4 - slide 12
-    def linear_combiner(x, w):
+    def linear_combiner(self, x, w):
         # x = vetor de entrada (m+1)
         # w = vetor de pesos
 
@@ -80,15 +84,15 @@ class BaseMLP:
 
         # Por praticidade é inicializada a somatória da saída já com o valor do bias, sendo equivalente ao mencionado anteriormente
 
-        v = bias
-        for i in range(m):
+        v = self.bias
+        for i in range(self.n_hidden_neurons):
             v += w[i]*x[i]
 
         return v
 
 
 
-    def activation_function(v):
+    def activation_function(self, v):
         # Linear
         # return v
 
@@ -133,6 +137,7 @@ class MultiLayerPerceptron(BaseMLP):
     Name of the output activation function.
     '''
 
+    '''
     n_input_knots = 256
 
     n_hidden_layers = # input
@@ -147,7 +152,7 @@ class MultiLayerPerceptron(BaseMLP):
     coefs_output
 
     bias = #?
-
+    '''
 
     def __init__(self, 
         n_input_knots=256, 
@@ -158,7 +163,7 @@ class MultiLayerPerceptron(BaseMLP):
 
         sup = super(MultiLayerPerceptron, self)
 
-        sup.init(
+        sup.__init__(
             n_input_knots=n_input_knots, 
             n_hidden_layers=n_hidden_layers,  
             n_hidden_neurons=n_hidden_neurons, 
@@ -187,7 +192,7 @@ class MultiLayerPerceptron(BaseMLP):
             # input_element é um vetor[256]
 
             # camadas escondidas
-            for layer_weights in coefs_hidden:
+            for layer_weights in self.coefs_hidden:
                 output_Y = []
 
                 for neuron_weights in layer_weights:
@@ -209,8 +214,9 @@ class MultiLayerPerceptron(BaseMLP):
             # cálculo do erro quadrático médio
             lsm = 0
             for d, y in zip(input_class, output_Y):
-                lms += (d+y)**2
+                lms += ((d+y)**2)/2
 
+            
            
             '''
             prob_pred = max(output_Y)
@@ -223,8 +229,6 @@ class MultiLayerPerceptron(BaseMLP):
             else:
                 # acertou a predição
             '''
-
-
 
             # 2. retropropagação do erro
 
