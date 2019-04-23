@@ -201,6 +201,118 @@ class BaseMLP:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+new_coefs = []
+new_coefs += coefs
+
+for layer in reversed(range(len(coefs))):
+
+    if layer != len(coefs)-1:
+        # Camada de Saída
+
+        for neuron in range(len(coefs[layer])):
+
+
+            for weight in range(len(neuron)):
+                old_weight = coefs[layer][neuron][weight]
+                current_output = output[layer][neuron]
+                previous_output = output[layer-1][neuron]
+                ideal_output = ideal[neuron]
+
+                new_weight = self.calc_new_weight(old_weight, 
+                    previous_output, 
+                    current_output, 
+                    ideal_output)
+
+
+                new_coefs[layer][neuron][weight] = new_weight
+
+    else:
+        # Camadas Escondidas
+        pass
+
+return new_coefs
+
+
+
+
+
+#https://stackabuse.com/creating-a-neural-network-from-scratch-in-python-adding-hidden-layers/
+
+
+# Phase 1
+
+
+dzo_dwo = ah
+
+dao_dzo = sigmoid(zo) * (1 - sigmoid(zo))       #6
+
+dcost_dao = (ao-labels)                         #5
+
+
+dcost_dwo = dcost_dao * dao_dzo * dzo_dwo          #1
+
+
+new_weight = current_weight - learning_rate * dcost_dwo
+
+
+
+# Phase 2
+
+dzh_dwh = input_features                        #9
+
+dah_dzh = sigmoid(zh) * (1 - sigmoid(zh))       #8
+
+dzo_dah = wo                                 #7 
+dcost_dzo = dcost_dao * dao_dzo              #4 
+dcost_dah = dcost_dzo * dzo_dah                 #3
+
+dcost_dwh = dcost_dah * dah_dzh * dzh_dwh          #2
+
+
+new_weight = current_weight - learning_rate * dcost_dwh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class MultiLayerPerceptron(BaseMLP):
 
     # Os métodos implementados para essa classe fazem interface com chamadas de usuários
