@@ -19,15 +19,14 @@ class BaseMLP:
 
     def __init__(self, 
         n_input_knots, n_hidden_layers, n_hidden_neurons, 
-        n_output_neurons, learning_rate, coefs_hidden, coefs_output):
+        n_output_neurons, learning_rate, coefs):
 
         self.n_input_knots = n_input_knots
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_neurons = n_hidden_neurons
         self.n_output_neurons = n_output_neurons
         self.learning_rate = learning_rate
-        self.coefs_hidden = coefs_hidden
-        self.coefs_output = coefs_output
+        self.coefs = coefs
 
 
     # Inicia a matriz de coeficientes
@@ -46,7 +45,7 @@ class BaseMLP:
 
                 weight_matrix.append(weights)
 
-            self.coefs_hidden.append(weight_matrix)
+            self.coefs.append(weight_matrix)
 
         # Output Layer
         for k in range(self.n_output_neurons):
@@ -56,8 +55,17 @@ class BaseMLP:
                 # +1 correspondente ao weight do bias
                 weights.append(random.random())
 
-        self.coefs_output.append(weights)
+        self.coefs.append(weights)
 
+
+    def forward_propagate(self, X, layer_weights):
+        Y = []
+        for neuron_weights in layer_weights:
+            y_pred = self.neuron(X, neuron_weights)
+
+            Y.append(y_pred)
+
+        return Y
 
 
     def neuron(self, X, W):
@@ -69,7 +77,6 @@ class BaseMLP:
         y = self.activation_function(v)
 
         return y
-
 
 
     # cap4 - slide 12
@@ -103,7 +110,6 @@ class BaseMLP:
         return v
 
 
-
     def activation_function(self, v):
         # Linear
         # return v
@@ -128,67 +134,84 @@ class BaseMLP:
         return lms
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     def delta_rule(self, r, p):
-        # target = real
-        # out = predicted
+        # target = real = r
+        # actual output = predicted = p
 
         return -(r-p)+(p*(1-p))
 
 
-    def forward_propagate(self, X, layer_weights):
-        Y = []
-        for neuron_weights in layer_weights:
-            y_pred = self.neuron(X, neuron_weights)
+    def calc_new_weight(self, old_weight, previous_output, current_output, ideal_output):
 
-            Y.append(y_pred)
+        gradient = self.delta_rule(ideal_output, current_output) * previous_output
 
-        return Y
+        new_weight = old_weight - self.learning_rate * gradient
+
+        return new_weight
+
+
+
 
 
     # Backpropagate error and store in neurons        
-    def backward_propagate_error(self, coefs, output, real_class):
+    def backward_propagate_error(self, coefs, output, ideal):
 
-        new_coefs
+        new_coefs = []
+        new_coefs += coefs
 
-        flag_output_layer = True
-        for layer_weights, output_Y in reversed(zip(coefs, output)):
+        for layer in reversed(range(len(coefs))):
 
-            if flag_output_layer:
-                flag_output_layer=False
+            if layer != len(coefs)-1:
+                # Camada de Saída
 
-                for neuron_weights in layer_weights:
-                    error = 0.0
-
+                for neuron in range(len(coefs[layer])):
 
 
+                    for weight in range(len(neuron)):
+                        old_weight = coefs[layer][neuron][weight]
+                        current_output = output[layer][neuron]
+                        previous_output = output[layer-1][neuron]
+                        ideal_output = ideal[neuron]
+
+                        new_weight = self.calc_new_weight(old_weight, 
+                            previous_output, 
+                            current_output, 
+                            ideal_output)
 
 
+                        new_coefs[layer][neuron][weight] = new_weight
 
+            else:
+                # Camadas Escondidas
+                pass
 
-                    error = self.loss_function(real_class, output)
-
-
-                    gradient = self.delta_rule(real, predicted) * predicted_anterior
-
-                    new_weight = old_weight - gradient * self.learning_rate
-
-
-
-
-
+        return new_coefs
 
 
 
 class MultiLayerPerceptron(BaseMLP):
 
     # Os métodos implementados para essa classe fazem interface com chamadas de usuários
-
+    # neural network hyperparameters
     def __init__(self, 
         n_input_knots=256, 
         n_hidden_layers=1,  
         n_hidden_neurons=30,
         n_output_neurons=10,
-        learning_rate=0.5):
+        learning_rate=0.5,
+        coefs=[]):
 
         sup = super(MultiLayerPerceptron, self)
 
@@ -198,8 +221,7 @@ class MultiLayerPerceptron(BaseMLP):
             n_hidden_neurons=n_hidden_neurons, 
             n_output_neurons=n_output_neurons,
             learning_rate=learning_rate,
-            coefs_hidden=[],
-            coefs_output=[])
+            coefs=coefs)
 
 
     def fit(self, X, Y):
@@ -218,6 +240,7 @@ class MultiLayerPerceptron(BaseMLP):
             # cada elemento dessa sub-lista é a saída de um neurônio 
             output = []
             
+
             # 1. Propagação da Ativação
 
             # Camada de Entrada
@@ -225,8 +248,8 @@ class MultiLayerPerceptron(BaseMLP):
             input_X = input_element
 
 
-            # Camadas Escondidas
-            for layer_weights in self.coefs_hidden:
+            # Camadas Escondidas + Camada de Saída
+            for layer_weights in self.coefs:
                 output_Y = []
 
                 output_Y = self.forward_propagate(input_X, layer_weights)
@@ -236,20 +259,13 @@ class MultiLayerPerceptron(BaseMLP):
                 input_X = output_Y
                 
 
-            # Camada de Saída
-            output_Y = []
-            output_Y = self.forward_propagate(input_X, self.coefs_output)
-            output.append(output_Y)
 
 
             # 2. Retropropagação do Erro
+                    #total_error = self.loss_function(real_class, output)
 
-            coefs = []
-            coefs += self.coefs_hidden
-            coefs.append(coefs_output)
 
-            self.backward_propagate_error(coefs, output, input_class)
-
+            self.coefs = self.backward_propagate_error(self.coefs, output, input_class)
 
 
 
@@ -262,18 +278,10 @@ class MultiLayerPerceptron(BaseMLP):
             new_weight = old_weight - gradient * learning_rate
 
 
-            '''
-            prob_pred = max(output_Y)
-            class_pred = output_Y.index(prob_pred)
+            # TODO: Fazer gradient checking
+            # https://medium.com/analytics-vidhya/neural-networks-for-digits-recognition-e11d9dff00d5
 
-
-            # Cálculo do Erro
-            if class_pred != input_class.index('1'):
-                # errou a predição
-            else:
-                # acertou a predição
-            '''
-
+       
         return self
 
 
