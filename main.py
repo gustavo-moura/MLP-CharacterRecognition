@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from RedesNeurais import MultiLayerPerceptron
-from handler import read_data, show_digit, show_label, train_test_split
+from handler import read_data, show_digit, show_label, train_test_split, accuracy
 
 
 # Leitura do arquivo
@@ -13,8 +13,8 @@ read_data(digits, labels, filename="digits.data")
 # Exibir alguns itens para conferência
 # 	TODO: comentar esse trecho
 i = 0
-show_digit(digits[i])
-show_label(labels[i])
+# show_digit(digits[i])
+# show_label(labels[i])
 
 
 # TODO: fazer for pra k-fold cross validation
@@ -28,7 +28,7 @@ mlp = MultiLayerPerceptron().fit(x_train, y_train)
 
 y_pred = mlp.predict(x_test)
 
-accuracy(y_real, y_pred)
+# print(accuracy(y_real, y_pred))
 
 
 
