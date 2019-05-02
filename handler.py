@@ -2,6 +2,8 @@ import re
 import random
 from itertools import islice
 
+# Leitura dos Dados
+# ----------------------------------------------------------------------
 
 # Função utilizada para abrir um aquivo, ler e retornar as informações de digits e labels
 def read_data(digits, labels, filename='digits.data'):
@@ -73,6 +75,9 @@ def show_label(label):
     
 
 
+# Preparação dos Dados
+# ----------------------------------------------------------------------
+
 # Separa os dados e labels em conjuntos de treinamento e teste
 def train_test_split(X, Y, test_size=0.2, shuffle=True):
 
@@ -95,3 +100,24 @@ def train_test_split(X, Y, test_size=0.2, shuffle=True):
 
 
     return x_train, x_test, y_train, y_test
+
+
+
+
+# Cálculo Adicionais
+# ----------------------------------------------------------------------
+
+# Calcula a acurácia da previsão
+
+def accuracy(real, predicted):
+
+    V = 0
+    F = 0
+
+    for r, p in zip(real, predicted):
+        if r==p:
+            V += 0
+        else:
+            F += 0
+
+    return V/(V+F)

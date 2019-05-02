@@ -17,15 +17,17 @@ https://www.google.com/search?q=fun%C3%A7%C3%A3o+de+ativa%C3%A7%C3%A3o&source=ln
 
 class BaseMLP:
 
-    def __init__(self, n_input_knots, n_hidden_layers, n_hidden_neurons, n_output_neurons, coefs_hidden, coefs_output, bias):
+
+    def __init__(self, 
+        n_input_knots, n_hidden_layers, n_hidden_neurons, 
+        n_output_neurons, learning_rate, coefs):
 
         self.n_input_knots = n_input_knots
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_neurons = n_hidden_neurons
         self.n_output_neurons = n_output_neurons
-        self.coefs_hidden = coefs_hidden
-        self.coefs_output = coefs_output
-        self.bias = bias
+        self.learning_rate = learning_rate
+        self.coefs = coefs
 
 
     # Inicia a matriz de coeficientes
@@ -38,58 +40,78 @@ class BaseMLP:
             for k in range(self.n_hidden_neurons):
                 weights = []
 
-                for j in range(self.n_input_knots):
+
+                for j in range(self.n_input_knots + 1):
+                    # +1 correspondente ao weight do bias
                     weights.append(random.random())
 
                 weight_matrix.append(weights)
 
-            self.coefs_hidden.append(weight_matrix)
+            self.coefs.append(weight_matrix)
 
         # Output Layer
         for k in range(self.n_output_neurons):
             weights = []
 
-            for j in range(self.n_output_neurons):
+            for j in range(self.n_hidden_neurons + 1):
+                # +1 correspondente ao weight do bias
                 weights.append(random.random())
 
-            self.coefs_output.append(weights)
+        self.coefs.append(weights)
 
 
+    def forward_propagate(self, X, layer_weights):
+        Y = []
+        for neuron_weights in layer_weights:
+            y_pred = self.neuron(X, neuron_weights)
+
+            Y.append(y_pred)
+
+        return Y
 
 
 
     def neuron(self, X, W):
+        # X são os valores de entrada do neurônio
+        # W é a lista de pesos
 
         v = self.linear_combiner(X, W)
 
         y = self.activation_function(v)
 
-
         return y
 
 
-
     # cap4 - slide 12
-    def linear_combiner(self, x, w):
+    def linear_combiner(self, X, W):
         # x = vetor de entrada (m+1)
-        # w = vetor de pesos
+        # w = vetor de pesos (m+1)
 
         # fixed input
         # x[m] = 1
         # w[m] = bias
 
-        # Por praticidades da linguagem de programação, ao invés de colocar como x[0], é colocado como x[m]
-        # x.append(1)
-        # w.append(bias)
+        # Por paticularidades da linguagem de programação, 
+        # ao invés de colocar como x[0], é colocado como x[m].
+        # O mesmo vale para w.
+        _X = []
+        _X += X
+        _W = W
 
-        # Por praticidade é inicializada a somatória da saída já com o valor do bias, sendo equivalente ao mencionado anteriormente
+        # print(len(_X))
+        _X.append(1)
+        # print(len(_X))
 
-        v = self.bias
-        for i in range(self.n_hidden_neurons):
-            v += w[i]*x[i]
+
+        if len(_X)!=len(_W):
+            print("X[{}] != W[{}]".format(len(_X),len(_W)))
+            raise Exception("[BaseMLP][linear_combiner] Input and weight size do not match.\nX[{}] != W[{}]".format(len(X),len(W)))
+
+        v = 0
+        for x, w in zip(_X, _W):
+            v += float(w)*float(x)
 
         return v
-
 
 
     def activation_function(self, v):
@@ -106,7 +128,262 @@ class BaseMLP:
         return (1/(1+math.exp(-v)))
 
 
+    def loss_function(self, real, predicted):
+        # Cálculo do Erro Quadrático Médio
+        # Least Mean Square Error
+        lms = 0
+        for d, y in zip(real, predicted):
+            lms += (1/2)*((int(d)-y)**2)
+
+        return lms
+
+
+
+
+
+
+
+
+
+
+    '''
+    n_input_knots = 256
+
+
+
+
+    def delta_rule(self, r, p):
+        # target = real = r
+        # actual output = predicted = p
+
+        return -(r-p)+(p*(1-p))
+
+
+    def calc_new_weight(self, old_weight, previous_output, current_output, ideal_output):
+
+        gradient = self.delta_rule(ideal_output, current_output) * previous_output
+
+        new_weight = old_weight - self.learning_rate * gradient
+
+        return new_weight
+
+
+
+
+
+    # Backpropagate error and store in neurons        
+    def backward_propagate_error(self, coefs, output, ideal):
+
+        new_coefs = []
+        new_coefs += coefs
+
+        for layer in reversed(range(len(coefs))):
+
+            if layer != len(coefs)-1:
+                # Camada de Saída
+
+                for neuron in range(len(coefs[layer])):
+
+
+                    for weight in range(len(neuron)):
+                        old_weight = coefs[layer][neuron][weight]
+                        current_output = output[layer][neuron]
+                        previous_output = output[layer-1][neuron]
+                        ideal_output = ideal[neuron]
+
+                        new_weight = self.calc_new_weight(old_weight, 
+                            previous_output, 
+                            current_output, 
+                            ideal_output)
+
+
+                        new_coefs[layer][neuron][weight] = new_weight
+
+            else:
+                # Camadas Escondidas
+                pass
+
+        return new_coefs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+new_coefs = []
+new_coefs += coefs
+
+for layer in reversed(range(len(coefs))):
+
+    if layer != len(coefs)-1:
+        # Camada de Saída
+
+        for neuron in range(len(coefs[layer])):
+
+
+            for weight in range(len(neuron)):
+                old_weight = coefs[layer][neuron][weight]
+                current_output = output[layer][neuron]
+                previous_output = output[layer-1][neuron]
+                ideal_output = ideal[neuron]
+
+                new_weight = self.calc_new_weight(old_weight, 
+                    previous_output, 
+                    current_output, 
+                    ideal_output)
+
+
+                new_coefs[layer][neuron][weight] = new_weight
+
+    else:
+        # Camadas Escondidas
+        pass
+
+return new_coefs
+
+
+
+
+
+#https://stackabuse.com/creating-a-neural-network-from-scratch-in-python-adding-hidden-layers/
+
+
+
+    bias = #?
+    '''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class MultiLayerPerceptron(BaseMLP):
+
+    # Os métodos implementados para essa classe fazem interface com chamadas de usuários
+    # neural network hyperparameters
+    def __init__(self, 
+        n_input_knots=256, 
+        n_hidden_layers=1,  
+        n_hidden_neurons=30,
+        n_output_neurons=10,
+        learning_rate=0.5,
+        coefs=[]):
+
+        sup = super(MultiLayerPerceptron, self)
+
+        sup.__init__(
+            n_input_knots=n_input_knots, 
+            n_hidden_layers=n_hidden_layers,  
+            n_hidden_neurons=n_hidden_neurons, 
+            n_output_neurons=n_output_neurons,
+            learning_rate=learning_rate,
+            coefs=coefs)
+
+
+    def fit(self, X, Y):
+        # input layer is X
+        # X is list of arrays[256] of 0 and 1 
+
+        # Inicializa a matriz coef
+        self.start_matrix()
+
+
+        # UM epoch
+        for input_element, input_class in zip(X, Y):
+            
+            # Armazenando os valores de output de cada neuronio
+            # Cada elemento de output é uma nova lista representando uma camada, 
+            # cada elemento dessa sub-lista é a saída de um neurônio 
+            output = []
+            
+
+            # 1. Propagação da Ativação
+
+            # Camada de Entrada
+            # input_element é um vetor[256]
+            input_X = input_element
+
+
+
+            # Camadas Escondidas + Camada de Saída
+            for layer_weights in self.coefs:
+                output_Y = []
+
+                output_Y = self.forward_propagate(input_X, layer_weights)
+
+                output.append(output_Y)
+
+                input_X = output_Y
+                
+
+
+
+            # 2. Retropropagação do Erro
+            total_error = self.loss_function(real_class, output)
+
+            self.coefs = self.backward_propagate_error(self.coefs, output, input_class)
+
+
+
+            # Cálculo do Erro Quadrático Médio
+            error = self.loss_function(input_class, output_Y)
+            gradient = self.delta_rule(real, predicted) * predicted_anterior
+            new_weight = old_weight - gradient * learning_rate
+
+
+
+            # TODO: Fazer gradient checking
+            # https://medium.com/analytics-vidhya/neural-networks-for-digits-recognition-e11d9dff00d5
+
+       
+        return self
+
+
+    def predict(self, X):
+        pass
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -151,93 +428,7 @@ class MultiLayerPerceptron(BaseMLP):
 
     coefs_output
 
-    bias = #?
     '''
-
-    def __init__(self, 
-        n_input_knots=256, 
-        n_hidden_layers=100,  
-        n_hidden_neurons=256,
-        n_output_neurons=10, 
-        bias=0.1):
-
-        sup = super(MultiLayerPerceptron, self)
-
-        sup.__init__(
-            n_input_knots=n_input_knots, 
-            n_hidden_layers=n_hidden_layers,  
-            n_hidden_neurons=n_hidden_neurons, 
-            n_output_neurons=n_output_neurons,
-            coefs_hidden=[],
-            coefs_output=[],
-            bias=bias)
-
-
-    def fit(self, X, Y):
-        # input layer is X
-        # X is list of arrays[256] of 0 and 1 
-
-        # Inicializa a matriz coef
-        self.start_matrix()
-
-
-        # UM epoch
-        for input_element, input_class in zip(X, Y):
-            
-            
-            # 1. propagação da ativação
-
-            # camada de entrada
-            input_X = input_element
-            # input_element é um vetor[256]
-
-            # camadas escondidas
-            for layer_weights in self.coefs_hidden:
-                output_Y = []
-
-                for neuron_weights in layer_weights:
-                    y_pred = self.neuron(input_X, neuron_weights)
-
-                    output_Y.append(y_pred)
-
-                input_X = output_Y
-
-
-            # camada de saída
-            output_Y = []
-            for neuron_weights in coefs_output:
-                y_pred = self.neuron(input_X, neuron_weights)
-
-                output_Y.append(y_pred)
-
-
-            # cálculo do erro quadrático médio
-            lsm = 0
-            for d, y in zip(input_class, output_Y):
-                lms += ((d+y)**2)/2
-
-            
-           
-            '''
-            prob_pred = max(output_Y)
-            class_pred = output_Y.index(prob_pred)
-
-
-            # calculo do erro
-            if class_pred != input_class.index('1'):
-                # errou a predição
-            else:
-                # acertou a predição
-            '''
-
-            # 2. retropropagação do erro
-
-
-
-    def predict(self, X):
-        pass
-
-
 
     
 
